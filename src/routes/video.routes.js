@@ -1,0 +1,49 @@
+
+import { Router } from 'express';
+import {
+    deleteVideo,
+    getAllVideos,
+    getVideoById,
+    publishAVideo,
+    togglePublishStatus,
+    updateVideo,
+} from "../controllers/video.controller.js"
+import { varifyJWT } from "../middlewares/auth.middleware.js"
+import {optionalJWT} from "../middlewares/optimalAuth.middleware.js"
+import {upload} from "../middlewares/multer.middleware.js"
+
+const router = Router();
+
+router.route("/").get(getAllVideos)
+
+// Public route that needs user context for history tracking
+router.route("/:videoId").get(optionalJWT,getVideoById)
+
+
+router.use(varifyJWT); // Apply verifyJWT middleware to all routes in this file
+
+router
+    .route("/")
+    .post(
+        upload.fields([
+            {
+                name: "videoFile",
+                maxCount: 1,
+            },
+            {
+                name: "thumbnail",
+                maxCount: 1,
+            },
+            
+        ]),
+        publishAVideo
+    );
+
+router
+    .route("/:videoId")
+    .delete(deleteVideo)
+    .patch(upload.single("thumbnail"), updateVideo);
+
+router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+
+export default router
